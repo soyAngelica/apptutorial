@@ -1,5 +1,5 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
+import {Link, withRouter} from 'react-router-dom';
 import auth0Client from '../Auth';
 
 
@@ -24,6 +24,7 @@ function NavBar(props) {
             auth0Client.isAuthenticated() &&
             <div>
               <label className="mr-2 text-white">{auth0Client.getProfile().name}</label>
+              <img src={auth0Client.getProfile().picture} alt="" width="68"/>
               <button className="btn btn-dark" onClick={() => {signOut()}}>Sign Out</button>
             </div>
           }
@@ -33,4 +34,4 @@ function NavBar(props) {
 
 
 
-export default NavBar;
+export default withRouter(NavBar);

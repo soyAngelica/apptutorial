@@ -1,10 +1,29 @@
 // import dependencies 
 
 const express = require('express');
-const bodyParser = require('body-parser');
+const bodyParser = require('body-parser'); 
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+
+
+const jwt = require('express-jwt');
+const jwksRsa = require('jwks-rsa');
+
+const checkJwt = jwt({
+    secret: jwksRsa.expressJwtSecret({
+        cache: true,
+        rateLimit: true,
+        jwksRequestsPerMinute: 5,
+        jwksUri: `https://firstapp476.auth0.com/.well-known/jwks.json`
+    }),
+
+    // Validate the audience and the issuer.
+    audience: '4pUIDH4yUAiUlthgEkFfxc4O7sdphBRb',
+    issuer: `https://firstapp476.auth0.com/`,
+    algorithms: ['RS256']
+});
+
 
 
 
@@ -66,13 +85,14 @@ app.get('/:id',(req,res)=> {
 
 // insert a new question 
 
-app.post('/', (req, res) => { 
+app.post('/', checkJwt, (req, res) => {
     const {title, description} = req.body;
     const newQuestion = {
         id: questions.length + 1,
         title,
         description,
-        answers:[],
+        answers: [],
+        author: req.user.name,
     };
     questions.push(newQuestion);
     res.status(200).send();
@@ -81,18 +101,21 @@ app.post('/', (req, res) => {
 
 //insert a new answer to a question 
 
-app.post('/answer/:id',(req,res)=>{
+app.post('/answer/:id', checkJwt, (req, res) => {
     const {answer} = req.body;
-    const question = questions.filter(q=> (q.id === parseInt(req.params.id)));
-    if(question.length > 1) return res.status(500).send();
+  
+    const question = questions.filter(q => (q.id === parseInt(req.params.id)));
+    if (question.length > 1) return res.status(500).send();
     if (question.length === 0) return res.status(404).send();
-
+  
     question[0].answers.push({
-        answer,
+      answer,
+      author: req.user.name,
     });
-
+  
     res.status(200).send();
 });
+
 
 
 app.listen(8081, () => {
